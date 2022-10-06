@@ -26,6 +26,8 @@ CSC_COMBAT_RATING_DEFENSE       = 8;
 CSC_COMBAT_RATING_DODGE         = 9;
 CSC_COMBAT_RATING_PARRY         = 10;
 CSC_COMBAT_RATING_BLOCK         = 11;
+CSC_COMBAT_RATING_RESILIENCE    = 12;
+CSC_COMBAT_RATING_ARP           = 13;
 
 -- Weapon IDs
 CSC_LE_ITEM_WEAPON_AXE1H    = 0;
@@ -67,9 +69,11 @@ g_CombatRatingBaseValues = {
     [CSC_COMBAT_RATING_CRIT]          = 14,
     [CSC_COMBAT_RATING_SPELL_CRIT]    = 14,
     [CSC_COMBAT_RATING_DEFENSE]       = 1.5,
-    [CSC_COMBAT_RATING_DODGE]         = 12,
-    [CSC_COMBAT_RATING_PARRY]         = 15,
-    [CSC_COMBAT_RATING_BLOCK]         = 5
+    [CSC_COMBAT_RATING_DODGE]         = 13.8,
+    [CSC_COMBAT_RATING_PARRY]         = 13.8,
+    [CSC_COMBAT_RATING_BLOCK]         = 5,
+    [CSC_COMBAT_RATING_RESILIENCE]    = 28.75,
+    [CSC_COMBAT_RATING_ARP]           = 3.756097412
 };
 
 -- Class set items IDs

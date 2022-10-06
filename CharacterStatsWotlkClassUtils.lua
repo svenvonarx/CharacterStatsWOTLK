@@ -2,10 +2,43 @@
     Util functions specific for Classes
 ]]
 
+-- As of Classic Patch 3.4.0, GetTalentInfo indices no longer correlate
+-- to their positions in the tree. Building a talent cache ordered by
+-- tier then column allows us to replicate the previous behavior,
+-- and keep StatModTables human-readable.
+local orderedTalentCache = {}
+do
+	local f = CreateFrame("Frame")
+	f:RegisterEvent("SPELLS_CHANGED")
+	f:SetScript("OnEvent", function()
+		local temp = {}
+		for tab = 1, GetNumTalentTabs() do
+			temp[tab] = {}
+			local products = {}
+			for i = 1,GetNumTalents(tab) do
+				local name, _, tier, column = GetTalentInfo(tab,i)
+				local product = (tier - 1) * 4 + column
+				temp[tab][product] = i
+				table.insert(products, product)
+			end
+
+			table.sort(products)
+
+			orderedTalentCache[tab] = {}
+			local j = 1
+			for _, product in ipairs(products) do
+				orderedTalentCache[tab][j] = temp[tab][product]
+				j = j + 1
+			end
+		end
+		f:UnregisterEvent("SPELLS_CHANGED")
+	end)
+end
+
 -- returns additional crit % stats from Arcane instability and Critical Mass if any
 function CSC_GetMageCritStatsFromTalents()
 
-	-- !! It looks like these are already included in TBC by default
+	-- !! It looks like these are already included in WOTLK by default
 	local arcaneInstabilityCrit = 0;
 	local criticalMassCrit = 0;
 
@@ -25,17 +58,15 @@ end
 
 -- returns the spell hit from Arcane Focus and Elemental Precision talents
 function CSC_GetMageSpellHitFromTalents()
-	local arcaneHit = 0;
-	local frostFireHit = 0;
+	local mageExtraHit = 0;
 
 	-- Arcane Focus
-	local spellRank = select(5, GetTalentInfo(1, 2));
-	arcaneHit = spellRank * 2; -- 2% for each point
+	mageExtraHit = select(5, GetTalentInfo(1, orderedTalentCache[1][2])); -- 2% for each point
 
 	-- Elemental Precision
-	frostFireHit = select(5, GetTalentInfo(3, 3));
+	mageExtraHit = mageExtraHit + select(5, GetTalentInfo(3, orderedTalentCache[3][6]));
 
-	return arcaneHit, frostFireHit;
+	return mageExtraHit;
 end
 
 -- returns the spell hit from Suppression talent

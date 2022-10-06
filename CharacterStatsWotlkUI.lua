@@ -260,8 +260,8 @@ function UIConfig:SetCharacterSideStats()
         CSC_SideFrame_SetDefenseRating(SideCategoryStatsDefense.frames[2], unit);
         CSC_SideFrame_SetDefenseUncritableCap(SideCategoryStatsDefense.frames[3], unit);
         CSC_SideFrame_SetResilienceUncritableCap(SideCategoryStatsDefense.frames[4], unit);
-        CSC_SideFrame_SetChanceToBeCrittedBy73(SideCategoryStatsDefense.frames[5], unit);
-        CSC_SideFrame_SetChanceToBeCrittedBy70(SideCategoryStatsDefense.frames[6], unit);
+        CSC_SideFrame_SetChanceToBeCrittedBy83(SideCategoryStatsDefense.frames[5], unit);
+        CSC_SideFrame_SetChanceToBeCrittedBy80(SideCategoryStatsDefense.frames[6], unit);
         CSC_SideFrame_SetAvoidance(SideCategoryStatsDefense.frames[7], unit);
         CSC_SideFrame_SetDodgeRating(SideCategoryStatsDefense.frames[8], unit);
         CSC_SideFrame_SetParryRating(SideCategoryStatsDefense.frames[9], unit);
@@ -277,7 +277,7 @@ function UIConfig:InitializeSideStatsFrame()
     CSC_UIFrame.SideStatsFrame.title = CSC_UIFrame.SideStatsFrame:CreateFontString(nil, "OVERLAY");
     CSC_UIFrame.SideStatsFrame.title:SetFontObject("GameFontHighlight");
     CSC_UIFrame.SideStatsFrame.title:SetPoint("CENTER", CSC_UIFrame.SideStatsFrame.TitleBg, "CENTER", 0,  0);
-    CSC_UIFrame.SideStatsFrame.title:SetText("CharacterStatsTBC");
+    CSC_UIFrame.SideStatsFrame.title:SetText("CharacterStatsWOTLK");
 
     CSC_UIFrame.SideStatsFrame.ScrollFrame = CreateFrame("ScrollFrame", nil, CSC_UIFrame.SideStatsFrame, "UIPanelScrollFrameTemplate");
     CSC_UIFrame.SideStatsFrame.ScrollFrame:SetPoint("TOPLEFT", CSC_UIFrame.SideStatsFrame, "TOPLEFT", -35, -30);
@@ -403,7 +403,7 @@ end
 function UIConfig:SetupConfigInterface()
 
     CSC_ConfigFrame = CreateFrame("Frame", "CSC_InterfaceOptionsPanel", UIParent);
-    CSC_ConfigFrame.name = "CharacterStatsTBC";
+    CSC_ConfigFrame.name = "CharacterStatsWOTLK";
     InterfaceOptions_AddCategory(CSC_ConfigFrame);
 
     -- Title and font
@@ -412,7 +412,7 @@ function UIConfig:SetupConfigInterface()
     CSC_ConfigFrame.title:SetWidth(300);
     CSC_ConfigFrame.titleString = CSC_ConfigFrame.title:CreateFontString(nil, "OVERLAY", "GameFontNormal");
     CSC_ConfigFrame.titleString:SetPoint("TOPLEFT", CSC_ConfigFrame, "TOPLEFT", 10, -10);
-    CSC_ConfigFrame.titleString:SetText('|cff00c0ffCharacterStatsTBC|r');
+    CSC_ConfigFrame.titleString:SetText('|cff00c0ffCharacterStatsWOTLK|r');
     CSC_ConfigFrame.titleString:SetFont("Fonts\\FRIZQT__.tff", 20, "OUTLINE");
 
     -- Checkboxes
@@ -490,77 +490,77 @@ hooksecurefunc("ToggleCharacter", CSC_ToggleCharacterPostHook);
 
 -- Serializing the DB
 local function SerializeGlobalDatabase()
-    if (CharacterStatsTbcDB == nil) then
-        CharacterStatsTbcDB = UISettingsGlobal;
+    if (CharacterStatsWotlkDB == nil) then
+        CharacterStatsWotlkDB = UISettingsGlobal;
     end
 
-    if (CharacterStatsTbcDB.useBlizzardBlockValue == nil) then
-        CharacterStatsTbcDB.useBlizzardBlockValue = UISettingsGlobal.useBlizzardBlockValue;
+    if (CharacterStatsWotlkDB.useBlizzardBlockValue == nil) then
+        CharacterStatsWotlkDB.useBlizzardBlockValue = UISettingsGlobal.useBlizzardBlockValue;
     else
-        UISettingsGlobal.useBlizzardBlockValue = CharacterStatsTbcDB.useBlizzardBlockValue;
+        UISettingsGlobal.useBlizzardBlockValue = CharacterStatsWotlkDB.useBlizzardBlockValue;
     end
 
     -- Stats frame visibility
-    if (CharacterStatsTbcDB.statsPanelHidden == nil) then
-        CharacterStatsTbcDB.statsPanelHidden = UISettingsGlobal.statsPanelHidden;
+    if (CharacterStatsWotlkDB.statsPanelHidden == nil) then
+        CharacterStatsWotlkDB.statsPanelHidden = UISettingsGlobal.statsPanelHidden;
     else
-        UISettingsGlobal.statsPanelHidden = CharacterStatsTbcDB.statsPanelHidden;
+        UISettingsGlobal.statsPanelHidden = CharacterStatsWotlkDB.statsPanelHidden;
     end
 end
 
 local function SerializeCharacterDatabase()
-    if (CharacterStatsTbcCharacterDB == nil) then
-        CharacterStatsTbcCharacterDB = UISettingsCharacter;
+    if (CharacterStatsWotlkCharacterDB == nil) then
+        CharacterStatsWotlkCharacterDB = UISettingsCharacter;
     end
 
     -- Left dropdown category
-    if (CharacterStatsTbcCharacterDB.selectedLeftStatsCategory == nil) then
-        CharacterStatsTbcCharacterDB.selectedLeftStatsCategory = UISettingsCharacter.selectedLeftStatsCategory;
+    if (CharacterStatsWotlkCharacterDB.selectedLeftStatsCategory == nil) then
+        CharacterStatsWotlkCharacterDB.selectedLeftStatsCategory = UISettingsCharacter.selectedLeftStatsCategory;
     else
-        UISettingsCharacter.selectedLeftStatsCategory = CharacterStatsTbcCharacterDB.selectedLeftStatsCategory;
+        UISettingsCharacter.selectedLeftStatsCategory = CharacterStatsWotlkCharacterDB.selectedLeftStatsCategory;
     end
 
     -- Right dropdown category
-    if (CharacterStatsTbcCharacterDB.selectedRightStatsCategory == nil) then
-        CharacterStatsTbcCharacterDB.selectedRightStatsCategory = UISettingsCharacter.selectedRightStatsCategory;
+    if (CharacterStatsWotlkCharacterDB.selectedRightStatsCategory == nil) then
+        CharacterStatsWotlkCharacterDB.selectedRightStatsCategory = UISettingsCharacter.selectedRightStatsCategory;
     else
-        UISettingsCharacter.selectedRightStatsCategory = CharacterStatsTbcCharacterDB.selectedRightStatsCategory;
+        UISettingsCharacter.selectedRightStatsCategory = CharacterStatsWotlkCharacterDB.selectedRightStatsCategory;
     end
 
     -- Stats from AD items checkbox
-    if (CharacterStatsTbcCharacterDB.showStatsFromArgentDawnItems == nil) then
-        CharacterStatsTbcCharacterDB.showStatsFromArgentDawnItems = UISettingsCharacter.showStatsFromArgentDawnItems;
+    if (CharacterStatsWotlkCharacterDB.showStatsFromArgentDawnItems == nil) then
+        CharacterStatsWotlkCharacterDB.showStatsFromArgentDawnItems = UISettingsCharacter.showStatsFromArgentDawnItems;
     else
-        UISettingsCharacter.showStatsFromArgentDawnItems = CharacterStatsTbcCharacterDB.showStatsFromArgentDawnItems;
+        UISettingsCharacter.showStatsFromArgentDawnItems = CharacterStatsWotlkCharacterDB.showStatsFromArgentDawnItems;
     end
 
     -- Side Stats frame status
-    if (CharacterStatsTbcCharacterDB.sideStatsFrameHidden == nil) then
-        CharacterStatsTbcCharacterDB.sideStatsFrameHidden = UISettingsCharacter.sideStatsFrameHidden;
+    if (CharacterStatsWotlkCharacterDB.sideStatsFrameHidden == nil) then
+        CharacterStatsWotlkCharacterDB.sideStatsFrameHidden = UISettingsCharacter.sideStatsFrameHidden;
     else
-        UISettingsCharacter.sideStatsFrameHidden = CharacterStatsTbcCharacterDB.sideStatsFrameHidden;
+        UISettingsCharacter.sideStatsFrameHidden = CharacterStatsWotlkCharacterDB.sideStatsFrameHidden;
     end
 
     -- Side Stats frame category visibilities
-    if (CharacterStatsTbcCharacterDB.showSideStatsMelee == nil) then
-        CharacterStatsTbcCharacterDB.showSideStatsMelee = UISettingsCharacter.showSideStatsMelee;
+    if (CharacterStatsWotlkCharacterDB.showSideStatsMelee == nil) then
+        CharacterStatsWotlkCharacterDB.showSideStatsMelee = UISettingsCharacter.showSideStatsMelee;
     else
-        UISettingsCharacter.showSideStatsMelee = CharacterStatsTbcCharacterDB.showSideStatsMelee;
+        UISettingsCharacter.showSideStatsMelee = CharacterStatsWotlkCharacterDB.showSideStatsMelee;
     end
-    if (CharacterStatsTbcCharacterDB.showSideStatsRanged == nil) then
-        CharacterStatsTbcCharacterDB.showSideStatsRanged = UISettingsCharacter.showSideStatsRanged;
+    if (CharacterStatsWotlkCharacterDB.showSideStatsRanged == nil) then
+        CharacterStatsWotlkCharacterDB.showSideStatsRanged = UISettingsCharacter.showSideStatsRanged;
     else
-        UISettingsCharacter.showSideStatsRanged = CharacterStatsTbcCharacterDB.showSideStatsRanged;
+        UISettingsCharacter.showSideStatsRanged = CharacterStatsWotlkCharacterDB.showSideStatsRanged;
     end
-    if (CharacterStatsTbcCharacterDB.showSideStatsSpell == nil) then
-        CharacterStatsTbcCharacterDB.showSideStatsSpell = UISettingsCharacter.showSideStatsSpell;
+    if (CharacterStatsWotlkCharacterDB.showSideStatsSpell == nil) then
+        CharacterStatsWotlkCharacterDB.showSideStatsSpell = UISettingsCharacter.showSideStatsSpell;
     else
-        UISettingsCharacter.showSideStatsSpell = CharacterStatsTbcCharacterDB.showSideStatsSpell;
+        UISettingsCharacter.showSideStatsSpell = CharacterStatsWotlkCharacterDB.showSideStatsSpell;
     end
-    if (CharacterStatsTbcCharacterDB.showSideStatsDefense == nil) then
-        CharacterStatsTbcCharacterDB.showSideStatsDefense = UISettingsCharacter.showSideStatsDefense;
+    if (CharacterStatsWotlkCharacterDB.showSideStatsDefense == nil) then
+        CharacterStatsWotlkCharacterDB.showSideStatsDefense = UISettingsCharacter.showSideStatsDefense;
     else
-        UISettingsCharacter.showSideStatsDefense = CharacterStatsTbcCharacterDB.showSideStatsDefense;
+        UISettingsCharacter.showSideStatsDefense = CharacterStatsWotlkCharacterDB.showSideStatsDefense;
     end
 end
 
@@ -571,13 +571,13 @@ dbLoader:RegisterEvent("PLAYER_LOGOUT");
 -- ADDON_LOADED is called after the code of the addon is being executed
 -- Therefore I have to call any setup-functions dependent on the DB after the event (UIConfig:SetupDropdown())
 function dbLoader:OnEvent(event, arg1)
-    if (event == "ADDON_LOADED" and arg1 == "CharacterStatsTBC") then
+    if (event == "ADDON_LOADED" and arg1 == "CharacterStatsWOTLK") then
         SerializeGlobalDatabase();
         SerializeCharacterDatabase();
         UIConfig:CreateMenu();
     elseif (event == "PLAYER_LOGOUT") then
-        CharacterStatsTbcDB = UISettingsGlobal;
-        CharacterStatsTbcCharacterDB = UISettingsCharacter;
+        CharacterStatsWotlkDB = UISettingsGlobal;
+        CharacterStatsWotlkCharacterDB = UISettingsCharacter;
     end
 end
 

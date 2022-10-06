@@ -10,6 +10,39 @@ local g_lastSeenBaseManaRegen = 0;
 local g_lastSeenCastingManaRegen = 0;
 g_APFromADItems = 0;
 
+-- As of Classic Patch 3.4.0, GetTalentInfo indices no longer correlate
+-- to their positions in the tree. Building a talent cache ordered by
+-- tier then column allows us to replicate the previous behavior,
+-- and keep StatModTables human-readable.
+local orderedTalentCache = {}
+do
+	local f = CreateFrame("Frame")
+	f:RegisterEvent("SPELLS_CHANGED")
+	f:SetScript("OnEvent", function()
+		local temp = {}
+		for tab = 1, GetNumTalentTabs() do
+			temp[tab] = {}
+			local products = {}
+			for i = 1,GetNumTalents(tab) do
+				local name, _, tier, column = GetTalentInfo(tab,i)
+				local product = (tier - 1) * 4 + column
+				temp[tab][product] = i
+				table.insert(products, product)
+			end
+
+			table.sort(products)
+
+			orderedTalentCache[tab] = {}
+			local j = 1
+			for _, product in ipairs(products) do
+				orderedTalentCache[tab][j] = temp[tab][product]
+				j = j + 1
+			end
+		end
+		f:UnregisterEvent("SPELLS_CHANGED")
+	end)
+end
+
 local function CSC_GetMP5FromGear(unit)
 	local mp5 = 0;
 	for i=1,18 do
@@ -118,18 +151,18 @@ function CSC_GetPlayerMissChances(unit, playerHitChance)
 	
 	local hitChance = playerHitChance;
 	local level = UnitLevel(unit);
-	local bossLevel = 73;
+	local bossLevel = 83;
 	local playerWeaponSkill = level * 5;
 	local bossDefense = bossLevel * 5;
 
-	-- Boss (level 73)
+	-- Boss (Level 83)
 	if (bossDefense - playerWeaponSkill >= 11) then
 		missChanceVsBoss = 5 + (bossDefense - playerWeaponSkill) * 0.2;
 	end
 	if (bossDefense - playerWeaponSkill <= 10) then
 		missChanceVsBoss = 5 + (bossDefense - playerWeaponSkill) * 0.1;
 	end
-	missChanceVsBoss = missChanceVsBoss + 1; -- hit suppression
+	-- missChanceVsBoss = missChanceVsBoss + 1; -- hit suppression
 
 	local dwMissChanceVsNpc = math.max(missChanceVsNPC + 19 - hitChance);
 	local dwMissChanceVsBoss = math.max(missChanceVsBoss + 19 - hitChance);
@@ -154,7 +187,7 @@ function CSC_GetPlayerCritCap(unit, ratingIndex)
 	local missChanceVsNPC, missChanceVsBoss, missChanceVsPlayer, dwMissChanceVsNpc, dwMissChanceVsBoss, dwMissChanceVsPlayer = CSC_GetPlayerMissChances(unit, totalHit);
 	
 	local playerWeaponSkill = UnitLevel(unit) * 5;
-	local bossDefense = 73 * 5;
+	local bossDefense = 83 * 5;
 	local critSuppression = 4.8;
 	local dodgeChance = 5 + (bossDefense - playerWeaponSkill) * 0,1;
 	local glancingChance = math.max(0, 6 + (bossDefense - playerWeaponSkill) * 1.2);
@@ -855,10 +888,8 @@ function CSC_PaperDollFrame_SetSpellHitChance(statFrame, unit)
 	local unitClassId = select(3, UnitClass(unit));
 
 	if unitClassId == CSC_MAGE_CLASS_ID then
-		local arcaneHit, frostFireHit = CSC_GetMageSpellHitFromTalents();
-		statFrame.arcaneHit = arcaneHit;
-		statFrame.frostHit = frostFireHit;
-		statFrame.fireHit = frostFireHit;
+		local mageExtraHit = CSC_GetMageSpellHitFromTalents();
+		statFrame.mageExtraHit = mageExtraHit;
 	elseif unitClassId == CSC_WARLOCK_CLASS_ID then
 		statFrame.afflictionHit = CSC_GetWarlockSpellHitFromTalents();
 	end
@@ -1172,11 +1203,23 @@ function CSC_SideFrame_SetMissChance(statFrame, unit, ratingIndex)
 	end
 
 	local hitRatingBonus = GetCombatRatingBonus(ratingIndex); -- hit rating in % (hit chance) (from gear sources, doesn't seem to include talents);
-	local totalHit = hitChance + hitRatingBonus;
+
+	local unitClassId = select(3, UnitClass(unit));
+
+	-- pixl: add hit from talents
+	local talentHitRatingBonus = 0;
+	if (unitClassId == CSC_DEATHKNIGHT_CLASS_ID) then
+		talentHitRatingBonus = select(5, GetTalentInfo(2, orderedTalentCache[2][6]));
+	elseif (unitClassId == CSC_WARRIOR_CLASS_ID) then
+		talentHitRatingBonus = select(5, GetTalentInfo(2, orderedTalentCache[2][13]));
+	end
+
+	local totalHit = hitChance + hitRatingBonus + talentHitRatingBonus;
+
 	local missChanceVsNPC, missChanceVsBoss, missChanceVsPlayer, dwMissChanceVsNpc, dwMissChanceVsBoss, dwMissChanceVsPlayer = CSC_GetPlayerMissChances(unit, totalHit);
 
 	if (ratingIndex == CR_HIT_MELEE) then
-		statFrame.tooltip = format("Miss Chance vs Level 73 NPC/Boss: %.2F%%", missChanceVsBoss)..CSC_SYMBOL_TAB..format("(Dual wield: %.2F%%)", dwMissChanceVsBoss);
+		statFrame.tooltip = format("Miss Chance vs Level 83 NPC/Boss: %.2F%%", missChanceVsBoss)..CSC_SYMBOL_TAB..format("(Dual wield: %.2F%%)", dwMissChanceVsBoss);
 		local missChanceNPCLineOne = format("Miss Chance vs Level %d NPC:     %.2F%%", playerLevel, missChanceVsNPC);
 		local missChanceNPCLineTwo = format("(Dual wield: %.2F%%)", dwMissChanceVsNpc);
 
@@ -1184,7 +1227,7 @@ function CSC_SideFrame_SetMissChance(statFrame, unit, ratingIndex)
 		local missChancePlayerLineTwo = format("(Dual wield: %.2F%%)", dwMissChanceVsPlayer);
 		statFrame.tooltip2 = missChanceNPCLineOne..CSC_SYMBOL_TAB..missChanceNPCLineTwo.."\n"..missChancePlayerLineOne..CSC_SYMBOL_TAB..missChancePlayerLineTwo;
 	else
-		statFrame.tooltip = format("Miss Chance vs Level 73 NPC/Boss: %.2F%%", missChanceVsBoss);
+		statFrame.tooltip = format("Miss Chance vs Level 83 NPC/Boss: %.2F%%", missChanceVsBoss);
 		statFrame.tooltip2 = format("Miss Chance vs Level %d NPC: %.2F%%", playerLevel, missChanceVsNPC).."\n"..format("Miss Chance vs Level %d Player: %.2F%%", playerLevel, missChanceVsPlayer);
 	end
 
@@ -1194,7 +1237,7 @@ end
 function CSC_SideFrame_SetCritCap(statFrame, unit, ratingIndex)
 	local critCap, dwCritCap = CSC_GetPlayerCritCap(unit, ratingIndex);
 
-	statFrame.tooltip = format("Crit cap vs Level 73 NPC/Boss: %.2F%%", critCap);
+	statFrame.tooltip = format("Crit cap vs Level 83 NPC/Boss: %.2F%%", critCap);
 	if (ratingIndex == CR_HIT_MELEE) then
 		local offhandItemId = GetInventoryItemID(unit, INVSLOT_OFFHAND);
 		if (offhandItemId) then
@@ -1220,7 +1263,17 @@ function CSC_SideFrame_SetMeleeHitChance(statFrame, unit)
 	end
 
 	local hitRatingBonus = GetCombatRatingBonus(CR_HIT_MELEE); -- hit rating in % (hit chance) (from gear sources, doesn't seem to include talents);
-	local totalHit = hitChance + hitRatingBonus;
+	local unitClassId = select(3, UnitClass(unit));
+
+	-- pixl: add hit from talents
+	local talentHitRatingBonus = 0;
+	if (unitClassId == CSC_DEATHKNIGHT_CLASS_ID) then
+		talentHitRatingBonus = select(5, GetTalentInfo(2, orderedTalentCache[2][6]));
+	elseif (unitClassId == CSC_WARRIOR_CLASS_ID) then
+		talentHitRatingBonus = select(5, GetTalentInfo(2, orderedTalentCache[2][13]));
+	end
+
+	local totalHit = hitChance + hitRatingBonus + talentHitRatingBonus;
 	CSC_PaperDollFrame_SetLabelAndText(statFrame, STAT_HIT_CHANCE, totalHit, true);
 end
 
@@ -1237,7 +1290,7 @@ function CSC_SideFrame_SetMeleeHasteRating(statFrame, unit)
 end
 
 function CSC_SideFrame_SetArmorPenetration(statFrame, unit)
-	local armorPen = GetArmorPenetration();
+	local armorPen = GetCombatRating(CR_ARMOR_PENETRATION);
 	statFrame.tooltip = format(ITEM_MOD_ARMOR_PENETRATION_RATING, armorPen);
 	CSC_PaperDollFrame_SetLabelAndText(statFrame, "Armor Penetration", armorPen, false);
 end
@@ -1309,7 +1362,14 @@ function CSC_SideFrame_SetSpellHitChance(statFrame, unit)
 	--spellHitChance = spellHitChance / 7; -- BUG ON BLIZZARD's side. returns 7 for each 1% hit. Dirty fix for now
 
 	local hitRatingBonus = GetCombatRatingBonus(CR_HIT_SPELL); -- hit rating in % (hit chance) (from gear sources, doesn't seem to include talents)
-	local totalHit = spellHitChance + hitRatingBonus;
+	local totalHit = spellHitChance + hitRatingBonus; -- todo pixl
+
+	local unitClassId = select(3, UnitClass(unit));
+	if unitClassId == CSC_MAGE_CLASS_ID then
+		local mageExtraHit = CSC_GetMageSpellHitFromTalents();
+		totalHit = totalHit + mageExtraHit;
+	end
+	
 	CSC_PaperDollFrame_SetLabelAndText(statFrame, STAT_HIT_CHANCE, totalHit, true);
 end
 
@@ -1361,50 +1421,50 @@ function CSC_SideFrame_SetBlockRating(statFrame, unit)
 	CSC_PaperDollFrame_SetLabelAndText(statFrame, "Block Rating", blockRating, false);
 end
 
-function CSC_SideFrame_SetChanceToBeCrittedBy70(statFrame, unit)
+function CSC_SideFrame_SetChanceToBeCrittedBy80(statFrame, unit)
 	local unitClassId = select(3, UnitClass(unit));
 	local base, modifier = UnitDefense(unit);
 	local bonusFromTalents = 0;
 
 	if unitClassId == CSC_DRUID_CLASS_ID then
-		bonusFromTalents = select(5, GetTalentInfo(2, 16)); -- Survival of the Fittest
+		bonusFromTalents = select(5, GetTalentInfo(2, orderedTalentCache[2][18])); -- Survival of the Fittest
 	end
 
-    local critChance = (base + modifier)*0.04 + GetCombatRatingBonus(16) + bonusFromTalents; 
-	local critChance70 = 19 - critChance;
-	local critChance70txt = format("%.2F%%", critChance70);
+    -- local critChance = (base + modifier)*0.04 + GetCombatRatingBonus(16) + bonusFromTalents; 
+	local critChance80 = 5-(GetDodgeBlockParryChanceFromDefense() + (GetCombatRating(15) * 0.01219512) + bonusFromTalents);
+	local critChance80txt = format("%.2F%%", critChance80);
 	
-    if critChance70 <= 0 then
-		critChance70txt = GREEN_FONT_COLOR_CODE..critChance70txt..FONT_COLOR_CODE_CLOSE;
-	elseif critChance70 > 0 then
-        critChance70txt = RED_FONT_COLOR_CODE..critChance70txt..FONT_COLOR_CODE_CLOSE;
+    if critChance80 <= 0 then
+		critChance80txt = GREEN_FONT_COLOR_CODE..critChance80txt..FONT_COLOR_CODE_CLOSE;
+	elseif critChance80 > 0 then
+        critChance80txt = RED_FONT_COLOR_CODE..critChance80txt..FONT_COLOR_CODE_CLOSE;
 	end
 	
-	statFrame.tooltip = "Chance to be critically hit by level 70";
-	CSC_PaperDollFrame_SetLabelAndText(statFrame, "Crit by lvl 70", critChance70txt, false);
+	statFrame.tooltip = "Chance to be critically hit by level 80";
+	CSC_PaperDollFrame_SetLabelAndText(statFrame, "Crit by lvl 80", critChance80txt, false);
 end
 
-function CSC_SideFrame_SetChanceToBeCrittedBy73(statFrame, unit)
+function CSC_SideFrame_SetChanceToBeCrittedBy83(statFrame, unit)
 	local unitClassId = select(3, UnitClass(unit));
 	local base, modifier = UnitDefense(unit);
 	local bonusFromTalents = 0;
 
 	if unitClassId == CSC_DRUID_CLASS_ID then
-		bonusFromTalents = select(5, GetTalentInfo(2, 16)); -- Survival of the Fittest
+		bonusFromTalents = select(5, GetTalentInfo(2, orderedTalentCache[2][18])); -- Survival of the Fittest
 	end
 
-	local critChance = (base + modifier)*0.04 + GetCombatRatingBonus(16) + bonusFromTalents;
-	local critChance73 = 19.6 - critChance;
-	local critChance73txt = format("%.2F%%", critChance73);
+	-- local critChance = (base + modifier)*0.04 + GetCombatRatingBonus(16) + bonusFromTalents;
+	local critChance83 = 5.6-(GetDodgeBlockParryChanceFromDefense() + (GetCombatRating(15) * 0.01219512) + bonusFromTalents);
+	local critChance83txt = format("%.2F%%", critChance83);
 	
-    if critChance73 <= 0 then
-		critChance73txt = GREEN_FONT_COLOR_CODE..critChance73txt..FONT_COLOR_CODE_CLOSE;
-	elseif critChance73 > 0 then
-        critChance73txt = RED_FONT_COLOR_CODE..critChance73txt..FONT_COLOR_CODE_CLOSE;
+    if critChance83 <= 0 then
+		critChance83txt = GREEN_FONT_COLOR_CODE..critChance83txt..FONT_COLOR_CODE_CLOSE;
+	elseif critChance83 > 0 then
+        critChance83txt = RED_FONT_COLOR_CODE..critChance83txt..FONT_COLOR_CODE_CLOSE;
 	end
 	
-	statFrame.tooltip = "Chance to be critically hit by level 73";
-	CSC_PaperDollFrame_SetLabelAndText(statFrame, "Crit by lvl 73", critChance73txt, false);
+	statFrame.tooltip = "Chance to be critically hit by Level 83";
+	CSC_PaperDollFrame_SetLabelAndText(statFrame, "Crit by lvl 83", critChance83txt, false);
 end
 
 function CSC_SideFrame_SetAvoidance(statFrame, unit)
@@ -1435,22 +1495,22 @@ function CSC_SideFrame_SetDefenseUncritableCap(statFrame, unit)
 	local bonusFromTalents = 0;
 
 	if unitClassId == CSC_DRUID_CLASS_ID then
-		bonusFromTalents = select(5, GetTalentInfo(2, 16)); -- Survival of the Fittest
+		bonusFromTalents = select(5, GetTalentInfo(2, orderedTalentCache[2][18])); -- Survival of the Fittest
 	end
 
-	local critChance = (base + modifier)*0.04 + GetCombatRatingBonus(16) + bonusFromTalents;
-	local defCap73 = (19.6 - critChance)/0.04*2.4;
-	local defCap73txt = format("%.2F", defCap73);
+	-- local critChance = (base + modifier)*0.04 + GetCombatRatingBonus(16) + bonusFromTalents;
+	local defCap83 = (5.6-(GetDodgeBlockParryChanceFromDefense() + (GetCombatRating(15) * 0.01219512) + bonusFromTalents))/0.04;
+	local defCap83txt = format("%.2F", (defCap83*4.918032786885246));
 	
-    if defCap73 <= 0 then
-		defCap73txt = GREEN_FONT_COLOR_CODE..defCap73txt..FONT_COLOR_CODE_CLOSE;
-	elseif defCap73 > 0 then
-        defCap73txt = RED_FONT_COLOR_CODE..defCap73txt..FONT_COLOR_CODE_CLOSE;
+    if defCap83 <= 0 then
+		defCap83txt = GREEN_FONT_COLOR_CODE..defCap83txt..FONT_COLOR_CODE_CLOSE;
+	elseif defCap83 > 0 then
+        defCap83txt = RED_FONT_COLOR_CODE..defCap83txt..FONT_COLOR_CODE_CLOSE;
 	end
 
-	statFrame.tooltip = "Needed Defense rating to become uncritable against lvl 73";
+	statFrame.tooltip = "Needed Defense rating to become uncritable against lvl 83";
 	statFrame.tooltip2 = "Takes into account both Defense and Resilience rating";
-	CSC_PaperDollFrame_SetLabelAndText(statFrame, "Defense to cap", defCap73txt, false);
+	CSC_PaperDollFrame_SetLabelAndText(statFrame, "Defense to cap", defCap83txt, false);
 end
 
 function CSC_SideFrame_SetResilienceUncritableCap(statFrame, unit)
@@ -1459,22 +1519,22 @@ function CSC_SideFrame_SetResilienceUncritableCap(statFrame, unit)
 	local bonusFromTalents = 0;
 
 	if unitClassId == CSC_DRUID_CLASS_ID then
-		bonusFromTalents = select(5, GetTalentInfo(2, 16)); -- Survival of the Fittest
+		bonusFromTalents = select(5, GetTalentInfo(2, orderedTalentCache[2][18])); -- Survival of the Fittest
 	end
 
-	local critChance = (base + modifier)*0.04 + GetCombatRatingBonus(16) + bonusFromTalents;
-	local defCap73 = (19.6 - critChance)*39.42;
-	local defCap73txt = format("%.2F", defCap73);
+	-- local critChance = (base + modifier)*0.04 + GetCombatRatingBonus(16) + bonusFromTalents;
+	local defCap83 = (5.6-(GetDodgeBlockParryChanceFromDefense() + (GetCombatRating(15) * 0.01219512) + bonusFromTalents))/0.01219512;
+	local defCap83txt = format("%.2F", defCap83);
 
-    if defCap73 <= 0 then
-		defCap73txt = GREEN_FONT_COLOR_CODE..defCap73txt..FONT_COLOR_CODE_CLOSE;
-	elseif defCap73 > 0 then
-        defCap73txt = RED_FONT_COLOR_CODE..defCap73txt..FONT_COLOR_CODE_CLOSE;
+    if defCap83 <= 0 then
+		defCap83txt = GREEN_FONT_COLOR_CODE..defCap83txt..FONT_COLOR_CODE_CLOSE;
+	elseif defCap83 > 0 then
+        defCap83txt = RED_FONT_COLOR_CODE..defCap83txt..FONT_COLOR_CODE_CLOSE;
 	end
 
-	statFrame.tooltip = "Needed Resilience rating to become uncritable against lvl 73";
+	statFrame.tooltip = "Needed Resilience rating to become uncritable against lvl 83";
 	statFrame.tooltip2 = "Takes into account both Defense and Resilience rating";
-	CSC_PaperDollFrame_SetLabelAndText(statFrame, "Resilience to cap", defCap73txt, false);
+	CSC_PaperDollFrame_SetLabelAndText(statFrame, "Resilience to cap", defCap83txt, false);
 end
 
 -- SIDE STATS FRAME END ================================================================================================================================================================

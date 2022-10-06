@@ -1,26 +1,26 @@
 -- Access the namespace
 local _, core = ...;
 
-local CharacterStatsTbcFrame = CreateFrame("Frame");
-CharacterStatsTbcFrame:RegisterEvent("PLAYER_ENTERING_WORLD");
-CharacterStatsTbcFrame:RegisterEvent("PLAYER_EQUIPMENT_CHANGED");
-CharacterStatsTbcFrame:RegisterEvent("UNIT_AURA");
-CharacterStatsTbcFrame:RegisterEvent("PLAYER_DAMAGE_DONE_MODS");
-CharacterStatsTbcFrame:RegisterEvent("SKILL_LINES_CHANGED");
-CharacterStatsTbcFrame:RegisterEvent("UPDATE_SHAPESHIFT_FORM");
-CharacterStatsTbcFrame:RegisterEvent("UNIT_DAMAGE");
-CharacterStatsTbcFrame:RegisterEvent("UNIT_ATTACK_SPEED");
-CharacterStatsTbcFrame:RegisterEvent("UNIT_RANGEDDAMAGE");
-CharacterStatsTbcFrame:RegisterEvent("UNIT_ATTACK");
-CharacterStatsTbcFrame:RegisterEvent("UNIT_RESISTANCES");
-CharacterStatsTbcFrame:RegisterEvent("UNIT_STATS");
-CharacterStatsTbcFrame:RegisterEvent("UNIT_MAXHEALTH");
-CharacterStatsTbcFrame:RegisterEvent("UNIT_ATTACK_POWER");
-CharacterStatsTbcFrame:RegisterEvent("UNIT_RANGED_ATTACK_POWER");
-CharacterStatsTbcFrame:RegisterEvent("COMBAT_RATING_UPDATE");
-CharacterStatsTbcFrame:RegisterEvent("GROUP_ROSTER_UPDATE");
+local CharacterStatsWotlkFrame = CreateFrame("Frame");
+CharacterStatsWotlkFrame:RegisterEvent("PLAYER_ENTERING_WORLD");
+CharacterStatsWotlkFrame:RegisterEvent("PLAYER_EQUIPMENT_CHANGED");
+CharacterStatsWotlkFrame:RegisterEvent("UNIT_AURA");
+CharacterStatsWotlkFrame:RegisterEvent("PLAYER_DAMAGE_DONE_MODS");
+CharacterStatsWotlkFrame:RegisterEvent("SKILL_LINES_CHANGED");
+CharacterStatsWotlkFrame:RegisterEvent("UPDATE_SHAPESHIFT_FORM");
+CharacterStatsWotlkFrame:RegisterEvent("UNIT_DAMAGE");
+CharacterStatsWotlkFrame:RegisterEvent("UNIT_ATTACK_SPEED");
+CharacterStatsWotlkFrame:RegisterEvent("UNIT_RANGEDDAMAGE");
+CharacterStatsWotlkFrame:RegisterEvent("UNIT_ATTACK");
+CharacterStatsWotlkFrame:RegisterEvent("UNIT_RESISTANCES");
+CharacterStatsWotlkFrame:RegisterEvent("UNIT_STATS");
+CharacterStatsWotlkFrame:RegisterEvent("UNIT_MAXHEALTH");
+CharacterStatsWotlkFrame:RegisterEvent("UNIT_ATTACK_POWER");
+CharacterStatsWotlkFrame:RegisterEvent("UNIT_RANGED_ATTACK_POWER");
+CharacterStatsWotlkFrame:RegisterEvent("COMBAT_RATING_UPDATE");
+CharacterStatsWotlkFrame:RegisterEvent("GROUP_ROSTER_UPDATE");
 
-CharacterStatsTbcFrame:SetScript("OnEvent",
+CharacterStatsWotlkFrame:SetScript("OnEvent",
     function(self, event, ...)
 
         local args = {...};

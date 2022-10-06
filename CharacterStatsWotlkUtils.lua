@@ -8,12 +8,14 @@ function CSC_GetCombatRatingPerUnitBonus(unit, combatRatingType)
         baseCombatRatingValue = 1;
     end
 
-    if (playerLevel >= 1 and playerLevel <= 10) then
+    if (playerLevel >= 1 and playerLevel <= 7) then
         result = baseCombatRatingValue / 26;
-    elseif (playerLevel > 10 and playerLevel <= 60) then
-        result = baseCombatRatingValue * ((playerLevel - 8) / 52);
+    elseif (playerLevel > 7 and playerLevel <= 60) then
+        result = baseCombatRatingValue * (1 / 52 * playerLevel - 8 / 52);
     elseif (playerLevel > 60 and playerLevel <= 70) then
-        result = baseCombatRatingValue * (82 / (262 - 3 * playerLevel));
+        result = baseCombatRatingValue * (3 / 82 * playerLevel + 131 / 41);
+	elseif (playerLevel > 70 and playerLevel <= 80) then
+        result = baseCombatRatingValue * (82 / 52 * (131 / 63) ^ ((playerLevel - 70) / 10));
     end
 
     return result;

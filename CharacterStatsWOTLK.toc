@@ -1,0 +1,27 @@
+## Interface: 30400
+## Author: Pixl (before Peter Getov)
+## Version: 2.0.0
+## Title: |cff00aeffCharacterStatsWOTLK|r
+## Notes: Advanced Character Stats
+## DefaultState:  enabled
+## SavedVariables: CharacterStatsWotlkDB
+## SavedVariablesPerCharacter: CharacterStatsWotlkCharacterDB
+
+Localization\Localization_en.lua
+Localization\Localization_de.lua
+Localization\Localization_cn.lua
+Localization\Localization_ru.lua
+Localization\Localization_fr.lua
+Localization\Localization_it.lua
+Localization\Localization_tw.lua
+Localization\Localization_kr.lua
+Localization\Localization_es.lua
+Localization\Localization_br.lua
+
+CharacterStatsWotlkConstants.lua
+CharacterStatsWotlkUI.lua
+CharacterStatsWotlkMain.lua
+CharacterStatsWotlkUtils.lua
+CharacterStatsWotlkCore.lua
+CharacterStatsWotlkClassUtils.lua
+CharacterStatsWotlkCallbacks.lua
